@@ -1,14 +1,44 @@
 import { Button, Form, Input } from 'antd';
+import {redirect, useNavigate} from "react-router-dom";
 
-const onFinish = (values) => {
-    console.log('Success:', values);
-};
-
-const onFinishFailed = (errorInfo) => {
-    console.log('Failed:', errorInfo);
-};
-
+//todo: extract api fetching
 export default function Signup() {
+    const nav = useNavigate();
+    const onFinish = (values) => {
+        if (values.password === values.password_confirm) {
+            delete values.password_confirm;
+            fetch('http://localhost:8000/api/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(values)
+            }).then(data => data.json()).then(res => {
+                fetch('http://localhost:8000/api/auth/login', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: values.email,
+                        password: values.password
+                    })
+                }).then(data => {
+                    if (data.ok){
+                        redirect('/')
+                    }
+                    throw new Error('Something went wrong creating the user')
+                })
+                nav('/')
+            });
+        }
+    };
+
+    const onFinishFailed = (errorInfo) => {
+        console.log('Failed:', errorInfo);
+    };
+
     return (
         <Form
             name="basic"
@@ -19,9 +49,25 @@ export default function Signup() {
             autoComplete="off"
         >
             <Form.Item
+                label="Name"
+                name="name"
+                rules={[{ required: true, message: 'Please input your name!' }]}
+            >
+                <Input />
+            </Form.Item>
+
+            <Form.Item
                 label="Username"
                 name="username"
                 rules={[{ required: true, message: 'Please input your username!' }]}
+            >
+                <Input />
+            </Form.Item>
+
+            <Form.Item
+                label="Email"
+                name="email"
+                rules={[{ required: true, message: 'Please input your email!' }]}
             >
                 <Input />
             </Form.Item>
